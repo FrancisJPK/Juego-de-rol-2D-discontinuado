@@ -1,0 +1,39 @@
+package graficos;
+
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
+
+public class HojaSprites {
+	private final int ancho;
+	private final int alto;
+	
+	//esto es un array de pixeles
+	public final int pixeles[];
+	
+	//lo de final en el constructor le indica a java que esos valores no van a cambiar, es una ayuda
+	//que acelera un poquito el programa
+	public HojaSprites(final String ruta,final int ancho,final int alto){
+		this.alto = alto;
+		this.ancho = ancho;
+		
+		pixeles = new int[ancho * alto];
+		//esto continua abajo
+		BufferedImage imagen;
+		try {
+		//que es esto? aca, creamos una imagen y le atribuimos el valor de una ruta
+			imagen = ImageIO.read(HojaSprites.class.getResource(ruta));
+			
+		//ahora volcamos los valores de la imagen en el array de pixeles para que cada tenga su color
+			//los atributos que recibe este metodo son (respectivamente):
+        //(posicion x) y (posicion y) inicial, (ancho) y (alto)de la imagen,
+		//el (array) donde guardamos la informacion de cada pixel, el (ofset), y el tamaño de escaneo
+			imagen.getRGB(0, 0, ancho, alto, pixeles, 0, ancho);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		//todo esto va dentro de un try catch porque puede haber errores
+		
+	}
+}

@@ -1,0 +1,31 @@
+package graficos;
+
+public final class Sprite {
+	private final int lado;//lado es el tamaño, no pusimos tamaño por la ñ, aveces no funca
+	//(recorda que estamos hablando del sprite)
+	
+	private int x;
+	private int y;
+	
+	//array que guarda la informacion de los colores de los pixeles
+	public int[] pixeles;
+	private HojaSprites hoja;
+	
+	public Sprite(final int lado,final int columna,final int fila, final HojaSprites hoja){
+		
+		this.lado = lado;
+		pixeles = new int[lado * lado];
+		//aca averiguamos las coordenadas x e y(acordatee, en funcion de los sprites):
+		this.x = columna * lado;
+		this.y = fila * lado;
+		this.hoja = hoja;
+		
+		//ahora, vamos a extraer el sprite de la hoja de sprites
+		for(int y = 0;y < lado;y++){
+			for(int x = 0;x < lado;x++){
+				pixeles[x + y * lado] = hoja.pixeles[(x + this.x)+(y + this.y)*hoja.obtenerAncho()];
+			}
+		}
+	}
+
+}

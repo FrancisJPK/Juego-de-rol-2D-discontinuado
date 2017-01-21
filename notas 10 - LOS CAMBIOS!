@@ -1,0 +1,331 @@
+
+package juego;
+
+import java.awt.BorderLayout;
+import java.awt.Canvas;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+
+import javax.swing.JFrame;
+
+import control.Teclado;
+import graficos.Pantalla;
+
+public class Juego extends Canvas implements Runnable{
+
+	private static final long serialVersionUID = 1L;
+	
+	private static final int ANCHO = 1800;
+	private static final int ALTO = 1600;
+	private static final String NOMBRE = "Juego";
+	
+	private static int aps = 0;
+	private static int fps = 0;
+	
+	private static int x = 0;
+	private static int y = 0;
+	
+	private static volatile boolean Corriendo = false;
+	
+	private static JFrame Ventana;
+	private static Thread thread;
+	private static Teclado teclado;
+	private static Pantalla pantalla;
+	
+	//aca creamos una nueva imagen en buffer, una imagen en blanco, con el modo de color rgb
+	//para manipular esta imagen nesesitamos hacerlo con pixeles
+	private static BufferedImage imagen = 
+			new BufferedImage(ANCHO,ALTO,BufferedImage.TYPE_INT_RGB);
+	//lo que hicimos aca es acceder a una imagen en forma de array de pixeles
+	private static int[] pixeles = ((DataBufferInt) imagen.getRaster().getDataBuffer()).getData();
+	
+//-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR DE JUEGO
+	private Juego(){
+
+		setPreferredSize(new Dimension(ANCHO,ALTO));
+		
+		//iniciamos la pantalla
+		pantalla = new Pantalla(ALTO,ANCHO);
+		
+		Ventana = new JFrame(NOMBRE);
+
+		teclado = new Teclado();
+		addKeyListener(teclado);
+		
+		Ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		Ventana.setResizable(false);
+		Ventana.setVisible(true);
+		Ventana.setLayout(new BorderLayout());
+		Ventana.add(this, BorderLayout.CENTER);
+		Ventana.pack();
+		Ventana.setLocationRelativeTo(null);
+		
+	}
+//-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO INICIAR
+	private synchronized void iniciar(){
+		
+		Corriendo = true;
+		thread = new Thread(this, "Graficos");
+		thread.start();
+	}
+//-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO DETENER
+	private synchronized void detener(){
+		Corriendo = false;
+
+		try {
+			thread.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+	}
+//-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO ACTUALIZAR
+	public void Actualizar(){
+		//modificamos todo esto para mover la camara
+		teclado.Actualizar();
+		if(teclado.arriba){
+			//los acelere un poquito...
+			y += 3;
+		}
+		if(teclado.abajo){
+			y -= 3;
+		}
+		if(teclado.izquierda){
+			x += 3;
+		}
+		if(teclado.derecha){
+			x -= 3;
+		}
+		
+		aps++;
+	}
+//-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO MOSTRAR
+	public void Mostrar(){
+		
+		BufferStrategy estrategia = getBufferStrategy();
+		
+		if(estrategia == null){
+			createBufferStrategy(3);
+			return;
+		}
+		
+		pantalla.limpiar();
+		pantalla.mostrar(x, y);
+		
+		//metodo mas fiable, menos costoso
+		System.arraycopy(pantalla.pixeles, 0, pixeles, 0, pixeles.length);
+		
+		//metodo que podria ser lento en algunas PCs
+		//for(int i = 0; i < pixeles.length; i++){
+		//	pixeles[i] = pantalla.pixeles[i];
+		//}
+		
+		//este objeto grafico se va a encargar de dibujar las cosas
+		Graphics g = estrategia.getDrawGraphics();
+		g.drawImage(imagen, 0, 0, getWidth(), getHeight(), null);
+		//destruye la memoria que g estaba ocupando, para cargar la nueva
+		g.dispose();
+		
+		//esto muestra lo que hay
+		estrategia.show();
+		
+		fps++;
+	}
+	//-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO RUN
+	public void run() {
+		
+		final int NS_POR_SEGUNDO = 1000000000;
+		final byte APS_OBJETIVO = 60; 
+		final double NS_POR_ACTUALIZACION = NS_POR_SEGUNDO / APS_OBJETIVO;
+		
+		long referenciaActualizacion = System.nanoTime();
+		long referenciaContador = System.nanoTime();
+		
+		double tiempoTranscurrido;
+		double delta = 0;
+
+		requestFocus();
+		
+		while(Corriendo){
+			final long inicioBucle = System.nanoTime();
+			
+			tiempoTranscurrido = inicioBucle - referenciaActualizacion;
+			referenciaActualizacion = inicioBucle;
+			
+			delta += tiempoTranscurrido / NS_POR_ACTUALIZACION;
+			
+			while(delta >= 1){
+				Actualizar();
+				delta--;
+			}
+			
+			Mostrar();
+			
+			if(System.nanoTime() - referenciaContador > NS_POR_SEGUNDO){
+				Ventana.setTitle(NOMBRE+"|| Actualizaciones por segundo: "+aps+" || Frames por segundo: "+fps);
+				aps = 0;
+				fps = 0;
+				referenciaContador = System.nanoTime();
+			}
+		}
+	}
+//-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO MAIN
+	public static void main(String[] args){
+		Juego juego = new Juego();
+		juego.iniciar();
+	}
+	
+}
+
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+|||||||||||||||||||||||||||||||||||CAMBIOS EN HOJASPRITES||||||||||||||||||||||||||||||||||||||||||
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+package graficos;
+
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
+
+public class HojaSprites {
+	private final int ancho;
+	private final int alto;
+	public final int pixeles[];
+	
+	//coleccion de hojas de sprite
+	
+	//aca creamos nuestra primera hoja de sprites la hacemos estatica para no tener que
+	//crearla en muchas clases, sino poder acceder solo con su nombre , en este caso, desierto
+	public static HojaSprites desierto = new HojaSprites("/texturas/desierto.png", 320, 320);
+	//fin de la coleccion
+	
+	
+	
+	public int obtenerAncho(){
+		return ancho;
+	}
+	
+	//-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR DE HOJASPRITES
+	public HojaSprites(final String ruta,final int ancho,final int alto){
+		this.alto = alto;
+		this.ancho = ancho;
+		pixeles = new int[ancho * alto];
+		BufferedImage imagen;
+		
+		try {
+			imagen = ImageIO.read(HojaSprites.class.getResource(ruta));
+			imagen.getRGB(0, 0, ancho, alto, pixeles, 0, ancho);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+}
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+|||||||||||||||||||||||||||||||||CAMBIOS EN SPRITE|||||||||||||||||||||||||||||||||||||||||||||||||
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+package graficos;
+
+public final class Sprite {
+	private final int lado;
+	
+	private int x;
+	private int y;
+	
+	public int[] pixeles;
+	private HojaSprites hoja;
+	
+	//coleccion de sprites
+	
+	//notese como accedemos a la hoja de sprites creada en HojaSprite (desierto)
+	public static Sprite asfalto = new Sprite(32, 0,0, HojaSprites.desierto);
+	//fin de la coleccion
+	
+	//-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR DE SPRITE
+	public Sprite(final int lado,final int columna,final int fila, final HojaSprites hoja){
+		
+		this.lado = lado;
+		pixeles = new int[lado * lado];
+
+		this.x = columna * lado;
+		this.y = fila * lado;
+		this.hoja = hoja;
+
+		for(int y = 0;y < lado;y++){
+			for(int x = 0;x < lado;x++){
+				pixeles[x + y * lado] = hoja.pixeles[(x + this.x)+(y + this.y)*hoja.obtenerAncho()];
+			}
+		}
+	}
+
+}
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+||||||||||||||||||||||||||CAMBIOS EN PANTALLA||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+package graficos;
+
+public final class Pantalla {
+	
+	private final int alto;
+	private final int ancho;
+	
+	public final int[] pixeles;
+	
+	//esto es temporal, es una muestra
+	
+	//aca averiguamos el tamaño del sprite
+	private final static int LADOSPRITE = 32;
+	private final static int MASCARASPRITE = LADOSPRITE -1;
+	
+	//fin
+	
+	public Pantalla(final int alto,final int ancho){
+		this.ancho = ancho;
+		this.alto = alto;
+		
+		pixeles = new int[alto * ancho];
+	}
+	
+	public void limpiar(){
+		for(int i = 0;i < pixeles.length;i++){
+
+			pixeles[i] = 0;
+		}
+	}
+
+	public void mostrar(final int compensacionX,final int compensacionY){
+
+		for(int y = 0;y < alto;y++){
+			int posicionY = y + compensacionY;
+			if(posicionY < 0 || posicionY >= alto){
+				continue;
+			}
+			
+			for(int x = 0;x < ancho;x++){
+				int posicionX = x + compensacionX ;
+				if(posicionX < 0 || posicionX >= ancho){
+					continue;
+				}
+				
+		//todo lo que sigue aca es temporal, es un ejemplo
+				
+		//codigo para redibujar
+		//ahora vamos a rrellenar el array de pixeles con los dibujos que vamos a mostrar por la 
+		//pantalla
+				
+		//la ecuacion que realizamos para acceder al array pixeles es la ecuacion que estuvimos
+	    //utilizando para acceder a las coordenadas en HojaSprites y en Sprites
+	    //igual la verdad no entendi bien esto, mirate el video, es el 11
+				pixeles[posicionX + posicionY * ancho] =
+						Sprite.asfalto.pixeles[(x & MASCARASPRITE)+(y & MASCARASPRITE) * LADOSPRITE];
+			}
+		}
+		
+	}
+}
+	
+
+

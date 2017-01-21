@@ -1,0 +1,273 @@
+
+package juego;
+
+import java.awt.BorderLayout;
+import java.awt.Canvas;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+
+import control.Teclado;
+import graficos.Pantalla;
+import mapa.Mapa;
+import mapa.mapaGenerado;
+
+public class Juego extends Canvas implements Runnable {
+
+	private static final long serialVersionUID = 1L;
+
+	private static final int ANCHO = 900;
+	private static final int ALTO = 650;
+	private static final String NOMBRE = "Juego";
+
+	private static String contador_fps = "";
+	private static String contador_aps = "";
+
+	private static int aps = 0;
+	private static int fps = 0;
+
+	private static int x = 0;
+	private static int y = 0;
+
+	private static volatile boolean Corriendo = false;
+
+	private static JFrame Ventana;
+	private static Thread thread;
+	private static Teclado teclado;
+	private static Pantalla pantalla;
+
+	private static Mapa mapa;
+
+	private static BufferedImage imagen = new BufferedImage(ANCHO, ALTO, BufferedImage.TYPE_INT_RGB);
+
+	private static int[] pixeles = ((DataBufferInt) imagen.getRaster().getDataBuffer()).getData();
+
+	private static final ImageIcon icono = new ImageIcon(Juego.class.getResource("/icono/icono.png"));
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR
+	// DE JUEGO
+	private Juego() {
+
+		setPreferredSize(new Dimension(ANCHO, ALTO));
+
+		pantalla = new Pantalla(ALTO, ANCHO);
+
+		mapa = new mapaGenerado(128, 128);
+
+		Ventana = new JFrame(NOMBRE);
+
+		teclado = new Teclado();
+		addKeyListener(teclado);
+
+		Ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		Ventana.setResizable(false);
+		Ventana.setIconImage(icono.getImage());
+
+		// con esto le quitamos los bordes a la ventana
+		Ventana.setUndecorated(true);
+
+		Ventana.setVisible(true);
+		Ventana.setLayout(new BorderLayout());
+		Ventana.add(this, BorderLayout.CENTER);
+		Ventana.pack();
+		Ventana.setLocationRelativeTo(null);
+
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// INICIAR
+	private synchronized void iniciar() {
+
+		Corriendo = true;
+		thread = new Thread(this, "Graficos");
+		thread.start();
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// DETENER
+	private synchronized void detener() {
+		Corriendo = false;
+
+		try {
+			thread.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// ACTUALIZAR
+	public void Actualizar() {
+
+		teclado.Actualizar();
+		if (teclado.arriba) {
+			y--;
+		}
+		if (teclado.abajo) {
+			y++;
+		}
+		if (teclado.izquierda) {
+			x--;
+		}
+		if (teclado.derecha) {
+			x++;
+		}
+		// lla que quitamos los bordes, no hay boton para cerrar, entonces lo
+		// creamos
+		// en la clase teclado y aca le decimos que hace
+		if (teclado.salir) {
+			System.exit(0);
+		}
+
+		aps++;
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// MOSTRAR
+	public void Mostrar() {
+
+		BufferStrategy estrategia = getBufferStrategy();
+
+		if (estrategia == null) {
+			createBufferStrategy(3);
+			return;
+		}
+
+		pantalla.limpiar();
+		mapa.mostrar(x, y, pantalla);
+
+		System.arraycopy(pantalla.pixeles, 0, pixeles, 0, pixeles.length);
+
+		// metodo que podria ser lento en algunas PCs
+		// for(int i = 0; i < pixeles.length; i++){
+		// pixeles[i] = pantalla.pixeles[i];
+		// }
+
+		Graphics g = estrategia.getDrawGraphics();
+		g.drawImage(imagen, 0, 0, getWidth(), getHeight(), null);
+		g.setColor(Color.LIGHT_GRAY);
+		g.fillRect(ANCHO / 2, ALTO / 2, 32, 32);
+
+		// esto dibuja los aps y los fps que son actualizxados cada segundo(mirar abajo)
+		//los ultimos dos parametros son la posicion donde se dibuja el string(por eso
+		//hacemos esto dentro del metodo mostrar)
+		g.drawString(contador_aps, 10, 20);
+		g.drawString(contador_fps, 10, 35);
+
+		g.dispose();
+
+		estrategia.show();
+
+		fps++;
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// RUN
+	public void run() {
+
+		final int NS_POR_SEGUNDO = 1000000000;
+		final byte APS_OBJETIVO = 60;
+		final double NS_POR_ACTUALIZACION = NS_POR_SEGUNDO / APS_OBJETIVO;
+
+		long referenciaActualizacion = System.nanoTime();
+		long referenciaContador = System.nanoTime();
+
+		double tiempoTranscurrido;
+		double delta = 0;
+
+		requestFocus();
+
+		while (Corriendo) {
+			final long inicioBucle = System.nanoTime();
+
+			tiempoTranscurrido = inicioBucle - referenciaActualizacion;
+			referenciaActualizacion = inicioBucle;
+
+			delta += tiempoTranscurrido / NS_POR_ACTUALIZACION;
+
+			while (delta >= 1) {
+				Actualizar();
+				delta--;
+			}
+
+			Mostrar();
+
+			if (System.nanoTime() - referenciaContador > NS_POR_SEGUNDO) {
+				// inicializamos los strings de aps y fps cada vez por segundo
+				contador_aps = "APS: " + aps;
+				contador_fps = "FPS: " + fps;
+
+				aps = 0;
+				fps = 0;
+				referenciaContador = System.nanoTime();
+			}
+		}
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// MAIN
+	public static void main(String[] args) {
+		Juego juego = new Juego();
+		juego.iniciar();
+	}
+
+}
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+||||||||||||||||||||||||||||||||||||||||||||CLASE TECLADO|||||||||||||||||||||||||||||||||||||||||||||||||||||||
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+package control;
+
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+
+public final class Teclado implements KeyListener {
+
+	private final static int numeroTeclas = 120;
+	private final boolean[] teclas = new boolean[numeroTeclas];
+
+	public boolean arriba;
+	public boolean abajo;
+	public boolean izquierda;
+	public boolean derecha;
+
+	// declaramos el nuevo boton de accion
+	public boolean salir;
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// ACTUALIZAR
+	public void Actualizar() {
+		arriba = teclas[KeyEvent.VK_W];
+		abajo = teclas[KeyEvent.VK_S];
+		izquierda = teclas[KeyEvent.VK_A];
+		derecha = teclas[KeyEvent.VK_D];
+
+		// le damos el valor true o false si pulsamos o no respectivamente
+		salir = teclas[KeyEvent.VK_ESCAPE];
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// KEYPRESSED
+	public void keyPressed(KeyEvent e) {
+		teclas[e.getKeyCode()] = true;
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// KEYRELEASE
+	public void keyReleased(KeyEvent e) {
+		teclas[e.getKeyCode()] = false;
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// KEYTYPED
+	public void keyTyped(KeyEvent e) {
+
+	}
+
+}

@@ -1,0 +1,218 @@
+package control;
+
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+
+//para capturar las teclas que va presionando el usuario nesesitamos implementar keylistener
+public final class Teclado implements KeyListener{
+	
+	//esto representa la id de la ultima tecla que usamos para el juego(alt + 120 para saber)
+	private final static int numeroTeclas = 120;
+	private final boolean[] teclas = new boolean[numeroTeclas];
+	
+	//definimos las 4 teclas que vamos a usar
+	//(no los hacemos privados porque deve ser rapido, lo que los getters no son)
+	public boolean arriba;
+	public boolean abajo;
+	public boolean izquierda;
+	public boolean derecha;
+	
+	//nota: a partir de ahora vamos a ver mucho el metodo actualizar en las clases que actualizan cosas
+	//y el metodo mostrar en las clases que dibujan cosas
+	public void Actualizar(){
+		//esto significa que la variable arriva equivale al booleano que se guarda en teclas
+		//y fijate que en el metodo keypressed va a ser cambiado
+		arriba = teclas[KeyEvent.VK_W];
+		abajo = teclas[KeyEvent.VK_S];
+		izquierda = teclas[KeyEvent.VK_A];
+		derecha = teclas[KeyEvent.VK_D];
+	}
+	//estos metodos son: tecla pulsada
+	public void keyPressed(KeyEvent e) {
+		//lo que hacemos aca es: cambiamos a true el booleano en la posicion que le asignamos
+		//a la W anteriormente, gracias a "e.getKeyCode()" que lo que hace es devolver un id de una
+		//tecla presionada en funcion de una variable de ese tipo, en este caso la "e", y la id
+		//de la tecla w es 87, por tanto, TECLAS en la posicion 87 CAMBIARA A TRUE, acordate
+		//nosotros le asignamos la posicion 87 de el vector TECLAS a la W
+		teclas[e.getKeyCode()] = true;
+	}
+	//cuando se suelta la tecla
+	public void keyReleased(KeyEvent e) {
+		teclas[e.getKeyCode()] = false;
+	}
+	//cuando la tecla se presiona y se suelta
+	public void keyTyped(KeyEvent e) {
+		
+	}
+
+}
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+||||||||||||||||||CAMBIOS EN LA CLASE JUEGO MARCADOS PARA FACIL DETECCION||||||||||||||||||||||||||||
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+package juego;
+
+import java.awt.BorderLayout;
+import java.awt.Canvas;
+import java.awt.Dimension;
+
+import javax.swing.JFrame;
+
+import control.Teclado;
+
+public class Juego extends Canvas implements Runnable{
+
+	private static final long serialVersionUID = 1L;
+	
+	private static final int ANCHO = 700;
+	private static final int ALTO = 600;
+	private static final String NOMBRE = "Juego";
+	
+	private static JFrame Ventana;
+	private static Thread thread;
+	
+	private static int aps = 0;
+	private static int fps = 0;
+	
+	
+	|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||CAMBIO 1
+	
+	//aca creamos un nuevo teclado, osea, es nuestro canvas, aca tenemos que crear todo
+	private static Teclado teclado;
+	
+	||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+	
+	
+	
+	private static volatile boolean Corriendo = false;
+//-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR DE JUEGO
+	private Juego(){
+
+		setPreferredSize(new Dimension(ANCHO,ALTO));
+		
+		Ventana = new JFrame(NOMBRE);
+		
+		|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||CAMBIO 2
+		
+		//aca iniciamos el teclado, notese, dentrod de juego
+		
+		teclado = new Teclado();
+		
+		//con esto, le estamos diciendo a java que detecte todas las teclas que se toquen, dentro
+		//de esta clase, y como estamos dentro del canvas, le estamos diciendo que detecte las 
+		//teclas presionadas en el canvas, que vendria directamente a ser el juego
+		
+		addKeyListener(teclado);
+		
+		|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+		
+		Ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		Ventana.setResizable(false);
+		Ventana.setVisible(true);
+		Ventana.setLayout(new BorderLayout());
+		Ventana.add(this, BorderLayout.CENTER);
+		Ventana.pack();
+		Ventana.setLocationRelativeTo(null);
+		
+	}
+//-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO INICIAR
+	private synchronized void iniciar(){
+		
+		Corriendo = true;
+		thread = new Thread(this, "Graficos");
+		thread.start();
+	}
+//-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO DETENER
+	private synchronized void detener(){
+		Corriendo = false;
+
+		try {
+			thread.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+	}
+//-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO ACTUALIZAR
+	public void Actualizar(){
+	
+	|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||CAMBIO 3
+	
+		//actualizamos el teclado(revisar que hace el metodo en la clase teclado ;))
+		teclado.Actualizar();
+		//y aca detectamos si el usuario pulsa las teclas y hacemos alguna cosa
+		if(teclado.arriba){
+			System.out.println("La tecla arriba se ha pulsado");
+		}
+		if(teclado.abajo){
+			System.out.println("La tecla abajo se ha pulsado");
+		}
+		if(teclado.izquierda){
+			System.out.println("La tecla izquierda se ha pulsado");
+		}
+		if(teclado.derecha){
+			System.out.println("La tecla derecha se ha pulsado");
+		}
+		
+		||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+		
+		aps++;
+	}
+//-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO MOSTRAR
+	public void Mostrar(){
+		fps++;
+	}
+	//-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO RUN
+	public void run() {
+		
+		final int NS_POR_SEGUNDO = 1000000000;
+		final byte APS_OBJETIVO = 60; 
+		final double NS_POR_ACTUALIZACION = NS_POR_SEGUNDO / APS_OBJETIVO;
+		
+		long referenciaActualizacion = System.nanoTime();
+		long referenciaContador = System.nanoTime();
+		
+		double tiempoTranscurrido;
+		double delta = 0;
+		
+		|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||CAMBIO 4
+		
+		//este request focus es opcional, es para que el usuario no tenga que pulsar la ventana
+		//para usar el juego, pero ojo, es opcional, si no lo pones el juego funciona igual
+		//pero si la ventana no esta seleccionada, no va a detectar lo que tomemos
+		//importante ponerlo antes del bucle principal
+		requestFocus();
+		
+		|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+		
+		while(Corriendo){
+			final long inicioBucle = System.nanoTime();
+			
+			tiempoTranscurrido = inicioBucle - referenciaActualizacion;
+			referenciaActualizacion = inicioBucle;
+			
+			delta += tiempoTranscurrido / NS_POR_ACTUALIZACION;
+			
+			while(delta >= 1){
+				Actualizar();
+				delta--;
+			}
+			
+			Mostrar();
+			
+			if(System.nanoTime() - referenciaContador > NS_POR_SEGUNDO){
+				Ventana.setTitle(NOMBRE+"|| Actualizaciones por segundo: "+aps+" || Frames por segundo: "+fps);
+				aps = 0;
+				fps = 0;
+				referenciaContador = System.nanoTime();
+			}
+		}
+	}
+//-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO MAIN
+	public static void main(String[] args){
+		Juego juego = new Juego();
+		juego.iniciar();
+	}
+	
+}
+

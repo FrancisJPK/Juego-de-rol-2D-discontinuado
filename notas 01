@@ -1,0 +1,78 @@
+//clase canvas = superficie especializada de java para dibujar a gran velocidad
+//y con pocos requisitos del sistema
+
+package Juego;
+//aca importamos todos los paquetes nesesarios para hacer las ventanas
+
+
+import java.awt.BorderLayout;
+import java.awt.Canvas;
+import java.awt.Dimension;
+
+import javax.swing.JFrame;
+
+public class Juego extends Canvas{
+	
+	//no me queda claro para que sirve esto, vos ponelo nomas...
+	private static final long serialVersionUID = 1L;
+	
+	//aca definimos el tamaño de la ventana, sera final, poorque durante toda la ejecucion
+	//no sera modificado
+	private static final int ANCHO = 700;
+	private static final int ALTO = 600;
+	
+	//definimos el nombre de la vantana
+	private static final String NOMBRE = "Juego";
+	
+	//aca creamos la ventana
+	private static JFrame Ventana;
+	//----------------------------------------------------------------------------------------------
+	//aca creamos el constructor del juego, todo lo que contenga dentro se va a ejecutar
+	//al iniciar el juego
+	private Juego(){
+		
+		//aca construimos la ventana
+		//este metodo se le llama para darle el tamaño a la ventana----------------------------
+		setPreferredSize(new Dimension(ANCHO,ALTO));
+		
+		
+		//aca iniciamos nuestro objeto ventana, notese como le pasamos el nombre----------------
+		Ventana = new JFrame(NOMBRE);
+		
+		
+		// IMPORTANTE; ASI SE CONFIGURA LA VENTANA----------------------------------------------
+		
+		Ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		Ventana.setResizable(false);
+		
+		//este set visible es imprescindible, si el la ventana no se ve---------------------------
+		Ventana.setVisible(true);
+		
+		
+		//que es esto de layout? una organizacion interna para la ventana-------------------------
+		//en el parentesis hay que pasarle un gestor
+		Ventana.setLayout(new BorderLayout());
+		
+		
+		//esto añadira nuestor canvas en el centro de la ventana------------------------------------
+		Ventana.add(this, BorderLayout.CENTER);
+		
+		
+		//esto sirve para que todo el contenido de la ventana se acomode a nuestro tamaño--------
+		//es inprescindible ponerlo!!!
+		Ventana.pack();
+		
+		
+		//esto va a fijar la ventana en el centro del escritorio------------------------------------
+		Ventana.setLocationRelativeTo(null);
+		
+		//estos fueron los 7 imprescindibles al crear una ventana
+		
+		
+	}
+	//a continuacion creamos el metodo main y creamos un objeto juego, por tanto, una ventana--
+	public static void main(String[] args){
+		Juego juego = new Juego();
+	}
+
+}

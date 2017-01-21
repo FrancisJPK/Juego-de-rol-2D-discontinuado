@@ -1,0 +1,58 @@
+package mapa;
+
+import graficos.Pantalla;
+
+//ACA ESTA LA EXPLICACION DE PORQUE ESTA CLASE SERA SOLO LA BASE PARA EL MAPA:
+//porque no sera el mapa, al haber varios mapas, nosotros creamos una plantilla para crear
+//mapas!! por eso la hacemos abstract, para que tenga que ser extendida
+public abstract class Mapa {
+	//un mapa va a ser un entorno por donde transcurra el juego. nosotros vamos a tener 2 tipos de 
+	//mapas, los aleatorios y los construidos. osea, vamos a hacer 2 constructores
+	//en esta clase vamos a hacer la base de nuestro mapa
+	
+	//definimos el alto y ancho del mapa
+	private int alto;
+	private int ancho;
+	
+	//este array guardara los tiles(ver siguiente episodio(16)) o recuadros del mapa. que son los 
+	//recuadros? todo lo que conforma el mapa, si ejecutas asi como esta el programa, todos esos 
+	//cuadros de asfalto que ves son un tile, son como "objetos" que conforman el mapa y mas adelante
+	//vamos a hacer distintas acciones para cada uno, por ejemplo, alguna pared que nos detenga...
+	private int[] cuadros;
+	//|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR DE MAPA ALEATORIO
+	public Mapa(int ancho, int alto){
+		this.ancho = ancho;
+		this.alto = alto;
+		
+		cuadros = new int[ancho*alto];
+		generarMapa();
+	}
+	//|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR DE MAPA PREDEFINIDO
+	public Mapa(int ancho, int alto,String ruta){
+		cargarMapa(ruta);
+		
+		cuadros = new int[ancho*alto];
+		generarMapa();
+	}
+	
+	//|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO CARGAR MAPA
+	private void cargarMapa(String ruta) {
+		
+		
+	}
+	//|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO GENERAR MAPA
+	public void generarMapa(){
+		
+	}
+	//|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO ACTUALIZAR
+	public void actualizar(){
+		
+	}
+	//|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO MOSTRAR
+	//nota importante, TOD0 lo que deva ser actualizado o mostrado, o los 2, deve tener estos
+	//metodos, porque nosotros le vamos a mandar a la pantalla todo lo que deve mostrar, ella
+	//lo va a procesar y se lo va a mandar procesado a juego para que lo muestre!
+	public void mostrar(int compensacionX,int compensacionY, Pantalla pantalla){
+		
+	}
+}

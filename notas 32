@@ -1,0 +1,437 @@
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+|||||||||||||||||||||||||||||||||||||||||||||||MAPA||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+package mapa;
+
+import graficos.Pantalla;
+import mapa.cuadro.Cuadro;
+
+public abstract class Mapa {
+
+	protected int alto;
+	protected int ancho;
+
+	protected int[] cuadros;
+	protected Cuadro[] cuadrosCatalogo;
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR
+	// DE MAPA ALEATORIO
+	public Mapa(int ancho, int alto) {
+		this.ancho = ancho;
+		this.alto = alto;
+
+		cuadros = new int[ancho * alto];
+		generarMapa();
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR
+	// DE MAPA PREDEFINIDO
+	public Mapa(String ruta) {
+		cargarMapa(ruta);
+		generarMapa();
+
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// CARGAR MAPA
+	// modificamos el modificador de este metodo para poder extenderlo
+	protected void cargarMapa(String ruta) {
+
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// GENERAR MAPA
+	protected void generarMapa() {
+
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// ACTUALIZAR
+	public void actualizar() {
+
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// MOSTRAR
+	public void mostrar(int compensacionX, int compensacionY, Pantalla pantalla) {
+		int oeste = compensacionX >> 5;
+		int este = (compensacionX + pantalla.obtenerAncho() + Cuadro.LADO) >> 5;
+		int norte = compensacionY >> 5;
+		int sur = (compensacionY + pantalla.obtenerAlto() + Cuadro.LADO) >> 5;
+
+		pantalla.estableceDiferencia(compensacionX, compensacionY);
+
+		for (int y = norte; y < sur; y++) {
+			for (int x = oeste; x < este; x++) {
+				// antiguo metodo para generar mapa al azar
+				// obtenerCuadro(x, y).mostrar(x, y, pantalla);
+
+				// nuevo metodo para cargar un mapa
+				if (x < 0 || y < 0 || x >= ancho || y >= ancho) {
+					Cuadro.VACIO.mostrar(x, y, pantalla);
+					;
+				} else {
+					cuadrosCatalogo[x + y * ancho].mostrar(x, y, pantalla);
+				}
+			}
+		}
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO OBRENET CUADRO
+
+	public Cuadro obtenerCuadro(final int x, final int y) {
+
+		if (x < 0 || y < 0 || x >= ancho || y >= ancho) {
+			return Cuadro.VACIO;
+		}
+		switch (cuadros[x + y * ancho]) {
+		case 0:
+			return Cuadro.ASFALTO;
+		case 1:
+			return Cuadro.ARENA;
+		case 2:
+			return Cuadro.BORDECARRETERA;
+		case 3:
+			return Cuadro.ESQUINACARRETERA;
+		case 4:
+			return Cuadro.FINPARED;
+		case 5:
+			return Cuadro.LINEACARRETERA;
+		case 6:
+			return Cuadro.OXIDO;
+		case 7:
+			return Cuadro.PARED;
+		case 8:
+			return Cuadro.PAREDPUERTAARENA;
+		case 9:
+			return Cuadro.PUERTAI;
+		case 10:
+			return Cuadro.PUERTAMAB;
+		case 11:
+			return Cuadro.PUERTAMAR;
+		case 12:
+			return Cuadro.PUERTASI;
+		default:
+			return Cuadro.VACIO;
+
+		}
+	}
+
+}
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+|||||||||||||||||||||||||||||||||||||||NUEVA CLASE MAPA CARGADO||||||||||||||||||||||||||||||||||||||||||||||||||
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+package mapa;
+
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
+
+import mapa.cuadro.Cuadro;
+
+public class mapaCargado extends Mapa {
+
+	// array que va a guardar los valores de los pixeles del modelo del
+	// mapa(15x15)
+	private int[] pixeles;
+
+	public mapaCargado(String ruta) {
+		super(ruta);
+	}
+
+	// leer el mapa (imagen de 15x15) para obtener la informacion nesesaria de
+	// la imagen, este metodo se extiende de la clase mapa
+	protected void cargarMapa(String ruta) {
+		try {
+			// leemos la imagen de referencia(la de 15x15)
+			BufferedImage imagen = ImageIO.read(mapaCargado.class.getResource(ruta));
+			// aca inicializamos el tamaño del mapa
+			ancho = imagen.getWidth();
+			alto = imagen.getHeight();
+
+			// inicializamos cuadrosCatalogo(clase mapa)
+			cuadrosCatalogo = new Cuadro[ancho * alto];
+			// inicializamos el array de pixeles que contendra los datos de
+			// color del plano del mapa
+			// (otra vez, la imagen de 15x15)
+			pixeles = new int[ancho * alto];
+			imagen.getRGB(0, 0, ancho, alto, pixeles, 0, ancho);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	// extendemos este metodo de la clase mapa
+	protected void generarMapa() {
+		// recorremos los pixeles para traducirlos
+		// en el switch se pone continue para que pase a la siguiente iteracion
+		// una vez encontrado el
+		// color adecuado
+		// nota: el ff que se pone antes de los valores rgb(los ultimos 6
+		// digitos), es el canal alfa
+		// definira la opacidad del color y para que todos nuestros sprites sean
+		// opacos ponemos el valor
+		// maximo(ff)
+		for (int i = 0; i < pixeles.length; i++) {
+			switch (pixeles[i]) {
+			case 0xff000000:
+				cuadrosCatalogo[i] = Cuadro.ASFALTO;
+				continue;
+			case 0xffB5886C:
+				cuadrosCatalogo[i] = Cuadro.ARENA;
+				continue;
+			case 0xff7E624F:
+				cuadrosCatalogo[i] = Cuadro.BORDECARRETERA;
+				continue;
+			case 0xffD0D0D0:
+				cuadrosCatalogo[i] = Cuadro.LINEACARRETERA;
+				continue;
+			case 0xff98735B:
+				cuadrosCatalogo[i] = Cuadro.ESQUINACARRETERA;
+				continue;
+			case 0xff808080:
+				cuadrosCatalogo[i] = Cuadro.PARED;
+				continue;
+			case 0xff4F1F1F:
+				cuadrosCatalogo[i] = Cuadro.PUERTASI;
+				continue;
+			case 0xff1A0A0A:
+				cuadrosCatalogo[i] = Cuadro.PUERTAI;
+				continue;
+			case 0xff7C2D2A:
+				cuadrosCatalogo[i] = Cuadro.OXIDO;
+				continue;
+			case 0xff893A2E:
+				cuadrosCatalogo[i] = Cuadro.PUERTAMAR;
+				continue;
+			case 0xff7B2B2B:
+				cuadrosCatalogo[i] = Cuadro.PUERTAMAB;
+				continue;
+			case 0xff717171:
+				cuadrosCatalogo[i] = Cuadro.FINPARED;
+				continue;
+			case 0xff626262:
+				cuadrosCatalogo[i] = Cuadro.PAREDPUERTAARENA;
+				continue;
+			default:
+				cuadrosCatalogo[i] = Cuadro.VACIO;
+			}
+		}
+	}
+}
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+|||||||||||||||||||||||||||||||||||||||||||||||JUEGO||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+package juego;
+
+import java.awt.BorderLayout;
+import java.awt.Canvas;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+
+import control.Teclado;
+import graficos.Pantalla;
+import mapa.Mapa;
+import mapa.mapaCargado;
+
+public class Juego extends Canvas implements Runnable {
+
+	private static final long serialVersionUID = 1L;
+
+	private static final int ANCHO = 800;
+	private static final int ALTO = 600;
+	private static final String NOMBRE = "After-That";
+
+	private static String contador_fps = "";
+	private static String contador_aps = "";
+
+	private static int aps = 0;
+	private static int fps = 0;
+
+	private static int x = 0;
+	private static int y = 0;
+
+	private static volatile boolean Corriendo = false;
+
+	private static JFrame Ventana;
+	private static Thread thread;
+	private static Teclado teclado;
+	private static Pantalla pantalla;
+
+	private static Mapa mapa;
+
+	private static BufferedImage imagen = new BufferedImage(ANCHO, ALTO, BufferedImage.TYPE_INT_RGB);
+
+	private static int[] pixeles = ((DataBufferInt) imagen.getRaster().getDataBuffer()).getData();
+
+	private static final ImageIcon icono = new ImageIcon(Juego.class.getResource("/icono/icono.png"));
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR
+	// DE JUEGO
+	private Juego() {
+
+		setPreferredSize(new Dimension(ANCHO, ALTO));
+
+		pantalla = new Pantalla(ALTO, ANCHO);
+
+		// mapa = new mapaGenerado(128, 128);
+		mapa = new mapaCargado("/mapas/cruce.png");
+		Ventana = new JFrame(NOMBRE);
+
+		teclado = new Teclado();
+		addKeyListener(teclado);
+
+		Ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		Ventana.setResizable(false);
+		Ventana.setIconImage(icono.getImage());
+		Ventana.setUndecorated(true);
+		Ventana.setVisible(true);
+		Ventana.setLayout(new BorderLayout());
+		Ventana.add(this, BorderLayout.CENTER);
+		Ventana.pack();
+		Ventana.setLocationRelativeTo(null);
+
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// INICIAR
+	private synchronized void iniciar() {
+
+		Corriendo = true;
+		thread = new Thread(this, "Graficos");
+		thread.start();
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// DETENER
+	private synchronized void detener() {
+		Corriendo = false;
+
+		try {
+			thread.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// ACTUALIZAR
+	public void Actualizar() {
+
+		teclado.Actualizar();
+		if (teclado.arriba) {
+			y--;
+		}
+		if (teclado.abajo) {
+			y++;
+		}
+		if (teclado.izquierda) {
+			x--;
+		}
+		if (teclado.derecha) {
+			x++;
+		}
+		if (teclado.salir) {
+			System.exit(0);
+		}
+
+		aps++;
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// MOSTRAR
+	public void Mostrar() {
+
+		BufferStrategy estrategia = getBufferStrategy();
+
+		if (estrategia == null) {
+			createBufferStrategy(3);
+			return;
+		}
+
+		// pantalla.limpiar(); este metodo ya no es nesesario porque usamos
+		// estrategias buffer
+		mapa.mostrar(x, y, pantalla);
+
+		System.arraycopy(pantalla.pixeles, 0, pixeles, 0, pixeles.length);
+
+		// metodo que podria ser lento en algunas PCs
+		// for(int i = 0; i < pixeles.length; i++){
+		// pixeles[i] = pantalla.pixeles[i];
+		// }
+
+		Graphics g = estrategia.getDrawGraphics();
+
+		g.drawImage(imagen, 0, 0, getWidth(), getHeight(), null);
+		g.setColor(Color.LIGHT_GRAY);
+		g.fillRect(ANCHO / 2, ALTO / 2, 32, 32);
+		g.drawString(contador_aps, 10, 20);
+		g.drawString(contador_fps, 10, 35);
+		g.dispose();
+
+		estrategia.show();
+
+		fps++;
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// RUN
+	public void run() {
+
+		final int NS_POR_SEGUNDO = 1000000000;
+		final byte APS_OBJETIVO = 60;
+		final double NS_POR_ACTUALIZACION = NS_POR_SEGUNDO / APS_OBJETIVO;
+
+		long referenciaActualizacion = System.nanoTime();
+		long referenciaContador = System.nanoTime();
+
+		double tiempoTranscurrido;
+		double delta = 0;
+
+		requestFocus();
+
+		while (Corriendo) {
+			final long inicioBucle = System.nanoTime();
+
+			tiempoTranscurrido = inicioBucle - referenciaActualizacion;
+			referenciaActualizacion = inicioBucle;
+
+			delta += tiempoTranscurrido / NS_POR_ACTUALIZACION;
+
+			while (delta >= 1) {
+				Actualizar();
+				delta--;
+			}
+
+			Mostrar();
+
+			if (System.nanoTime() - referenciaContador > NS_POR_SEGUNDO) {
+				contador_aps = "APS: " + aps;
+				contador_fps = "FPS: " + fps;
+
+				aps = 0;
+				fps = 0;
+				referenciaContador = System.nanoTime();
+			}
+		}
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// MAIN
+	public static void main(String[] args) {
+		Juego juego = new Juego();
+		juego.iniciar();
+	}
+
+}

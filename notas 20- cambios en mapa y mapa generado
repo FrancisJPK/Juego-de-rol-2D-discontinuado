@@ -1,0 +1,82 @@
+package mapa;
+
+import graficos.Pantalla;
+
+public abstract class Mapa {
+
+	protected int alto;
+	protected int ancho;
+
+	protected int[] cuadros;
+	//|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR DE MAPA ALEATORIO
+	public Mapa(int ancho, int alto){
+		this.ancho = ancho;
+		this.alto = alto;
+		
+		cuadros = new int[ancho*alto];
+		generarMapa();
+	}
+	//|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR DE MAPA PREDEFINIDO
+	public Mapa(int ancho, int alto,String ruta){
+		cargarMapa(ruta);
+		
+		cuadros = new int[ancho*alto];
+		generarMapa();
+	}
+	
+	//|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO CARGAR MAPA
+	private void cargarMapa(String ruta) {
+		
+		
+	}
+	//|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO GENERAR MAPA
+	protected void generarMapa(){
+		
+	}
+	//|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO ACTUALIZAR
+	public void actualizar(){
+		
+	}
+	//|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO MOSTRAR
+	//lo qeu vamos a hacer en este metodo es traducir el movimiento de los tiles en movimiento en pixeles
+	public void mostrar(int compensacionX,int compensacionY, Pantalla pantalla){
+		//los ints de los lados del mapa
+		//el oeste y es elste vamos a utilizar la compensacionX/32 (el tamaño de los tiles(cuadros))
+		//esto va a ser cambiado, por si cambiaramos el tamaño de los sprites...
+		int oeste = compensacionX >> 5; // /32  (spoiler de bite shifting)(con esta expresion hacemos lo mismo
+		//que cuando dividimos entre 32)
+		
+		//el este nos va a dar la parte mas derecha de la pantalla
+		int este = (compensacionX + pantalla.obtenerAncho()) >> 5;
+		
+		int norte = compensacionY >> 5;
+		
+		int sur = (compensacionY + pantalla.obtenerAlto()) >> 32;
+	}
+}
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+|||||||||||||||||||||||||||||||||||||||||NUEVA CLASE MAPA GENERADO|||||||||||||||||||||||||||||||||||||||||||||
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+package mapa;
+
+import java.util.Random;
+
+public class mapagenerado extends Mapa{
+	
+	private final Random aleatorio = new Random();
+
+	//|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR DE MAPA GENERADO
+	public mapagenerado(int ancho, int alto) {
+		super(ancho, alto);
+	}
+	//|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO GENERAR MAPA 
+	protected void generarMapa(){
+		for(int y = 0; y < alto; y++){
+			for(int x = 0; x < ancho; x++){
+				cuadros[y + x * ancho] = aleatorio.nextInt(3);
+			}
+		}
+	}
+
+}

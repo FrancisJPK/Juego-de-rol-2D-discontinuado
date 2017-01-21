@@ -1,0 +1,65 @@
+
+package Juego;
+
+import java.awt.BorderLayout;
+import java.awt.Canvas;
+import java.awt.Dimension;
+
+import javax.swing.JFrame;
+//Runnable es una interfaz para lanzar hilos
+public class Juego extends Canvas implements Runnable{
+
+	private static final long serialVersionUID = 1L;
+	
+	private static final int ANCHO = 700;
+	private static final int ALTO = 600;
+	private static final String NOMBRE = "Juego";
+
+	private static JFrame Ventana;
+	//declaramos un thread
+	private static Thread thread;
+	private Juego(){
+
+		setPreferredSize(new Dimension(ANCHO,ALTO));
+		
+		Ventana = new JFrame(NOMBRE);
+		
+		Ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		Ventana.setResizable(false);
+		Ventana.setVisible(true);
+		Ventana.setLayout(new BorderLayout());
+		Ventana.add(this, BorderLayout.CENTER);
+		Ventana.pack();
+		Ventana.setLocationRelativeTo(null);
+		
+	}
+	//crewamos este metodo para iniciar el segundo thread (contando el principal(metodo main)) 
+	private void iniciar(){
+		//detro del parentesis, le ponemos la clase desde donde se va a iniciar(en este caso, esta)
+		//el string al lado del parametro de la clase es simplemente un nombre
+		thread = new Thread(this, "Graficos");
+		//este metodo, cuando es llamado ejecuta todo lo que este dentro del metodo RUN
+		thread.start();//(ejecutar metodo run)
+	}
+	// y este para detenerlo
+	private void detener(){
+		
+	}
+	//el muy conocido run, e aqui:
+	public void run() {
+		System.out.println("El thread se esta ejecutando");
+	}
+	
+	public static void main(String[] args){
+		Juego juego = new Juego();
+		juego.iniciar();
+	}
+
+
+}
+/* 
+ * conclusion final, para tener mas de un hilo de ejecucion devemos implementar la interfaz runnable
+ * acto seguido implementar su metodo run(), crear un hilo y pasarle la clase donde se ejecutara(metodo iniciar)
+ * acto seguido iniciar ese thread(metodo inicar), lo que hara que todo lo que este dentro de run se ejecute
+ * GG
+ */

@@ -1,0 +1,530 @@
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+|||||||||||||||||||||||||||||||||||||||||||||||||CLASE MAPA|||||||||||||||||||||||||||||||||||||||||||||||||||||
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+package mapa;
+
+import graficos.Pantalla;
+import mapa.cuadro.Cuadro;
+
+public abstract class Mapa {
+
+	protected int alto;
+	protected int ancho;
+
+	protected int[] cuadros;
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR
+	// DE MAPA ALEATORIO
+	public Mapa(int ancho, int alto) {
+		this.ancho = ancho;
+		this.alto = alto;
+
+		cuadros = new int[ancho * alto];
+		generarMapa();
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR
+	// DE MAPA PREDEFINIDO
+	public Mapa(int ancho, int alto, String ruta) {
+		cargarMapa(ruta);
+
+		cuadros = new int[ancho * alto];
+		generarMapa();
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// CARGAR MAPA
+	private void cargarMapa(String ruta) {
+
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// GENERAR MAPA
+	protected void generarMapa() {
+
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// ACTUALIZAR
+	public void actualizar() {
+
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// MOSTRAR
+	public void mostrar(int compensacionX, int compensacionY, Pantalla pantalla) {
+		int oeste = compensacionX >> 5;
+		int este = (compensacionX + pantalla.obtenerAncho() + Cuadro.LADO) >> 5;
+		int norte = compensacionY >> 5;
+		int sur = (compensacionY + pantalla.obtenerAlto() + Cuadro.LADO) >> 5;
+
+		pantalla.estableceDiferencia(compensacionX, compensacionY);
+
+		for (int y = norte; y < sur; y++) {
+			for (int x = oeste; x < este; x++) {
+				obtenerCuadro(x, y).mostrar(x, y, pantalla);
+			}
+		}
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO OBRENET CUADRO
+	// con este metodo obtenemos un determinado cuadro en funcion de coordenadas
+	// que le pasemos, por ejemplo 0,0 es el cuadro asfalto
+	public Cuadro obtenerCuadro(final int x, final int y) {
+		// este switch no nesesita break porque el return cumple la misma
+		// funcion
+		if (x < 0 || y < 0 || x >= ancho || y >= ancho) {
+			return Cuadro.VACIO;
+		}
+		switch (cuadros[x + y * ancho]) {
+		case 0:
+			return Cuadro.ASFALTO;
+		case 2:
+			return Cuadro.VACIO;
+		case 3:
+			return Cuadro.VACIO;
+		case 4:
+			return Cuadro.VACIO;
+		default:
+			return Cuadro.VACIO;
+
+		}
+	}
+
+}
+
+package graficos;
+
+public final class Sprite {
+	private final int lado;
+
+	private int x;
+	private int y;
+
+	public int[] pixeles;
+	private HojaSprites hoja;
+
+	// coleccion de sprites
+	public static final Sprite asfalto = new Sprite(32, 0, 0, HojaSprites.desierto);
+	public static final Sprite tierra = new Sprite(32, 1, 0, HojaSprites.desierto);
+	// utilizando nuestro constructor de sprites que no nesesita sprites!
+	// notese como java detecta el color hexadecimal
+	public static final Sprite vacio = new Sprite(32, 0x1c3c3c);
+	// fin de la coleccion
+
+	// ||-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|METODO
+	// OBTENER LADO
+	public int obtenerLado() {
+		return lado;
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR
+	// DE SPRITE
+	public Sprite(final int lado, final int columna, final int fila, final HojaSprites hoja) {
+
+		this.lado = lado;
+		pixeles = new int[lado * lado];
+
+		this.x = columna * lado;
+		this.y = fila * lado;
+		this.hoja = hoja;
+
+		for (int y = 0; y < lado; y++) {
+			for (int x = 0; x < lado; x++) {
+				pixeles[x + y * lado] = hoja.pixeles[(x + this.x) + (y + this.y) * hoja.obtenerAncho()];
+			}
+		}
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR
+	// DE SPRITE ALTERNATIVO
+	// creamos un constructor de sprites alternativo para hacer el vacio sin
+	// tener
+	// que ocupar lugar en la hoja de sprites con uno o mas simples cubos vacios
+	public Sprite(final int lado, final int color) {
+		this.lado = lado;
+		pixeles = new int[lado * lado];
+		for (int i = 0; i < pixeles.length; i++) {
+			pixeles[i] = color;
+		}
+
+	}
+
+}
+
+package mapa;
+
+import graficos.Pantalla;
+import mapa.cuadro.Cuadro;
+
+public abstract class Mapa {
+
+	protected int alto;
+	protected int ancho;
+
+	protected int[] cuadros;
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR
+	// DE MAPA ALEATORIO
+	public Mapa(int ancho, int alto) {
+		this.ancho = ancho;
+		this.alto = alto;
+
+		cuadros = new int[ancho * alto];
+		generarMapa();
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR
+	// DE MAPA PREDEFINIDO
+	public Mapa(int ancho, int alto, String ruta) {
+		cargarMapa(ruta);
+
+		cuadros = new int[ancho * alto];
+		generarMapa();
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// CARGAR MAPA
+	private void cargarMapa(String ruta) {
+
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// GENERAR MAPA
+	protected void generarMapa() {
+
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// ACTUALIZAR
+	public void actualizar() {
+
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// MOSTRAR
+	public void mostrar(int compensacionX, int compensacionY, Pantalla pantalla) {
+		int oeste = compensacionX >> 5;
+		int este = (compensacionX + pantalla.obtenerAncho() + Cuadro.LADO) >> 5;
+		int norte = compensacionY >> 5;
+		int sur = (compensacionY + pantalla.obtenerAlto() + Cuadro.LADO) >> 5;
+
+		pantalla.estableceDiferencia(compensacionX, compensacionY);
+
+		for (int y = norte; y < sur; y++) {
+			for (int x = oeste; x < este; x++) {
+				obtenerCuadro(x, y).mostrar(x, y, pantalla);
+			}
+		}
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO OBRENET CUADRO
+	// con este metodo obtenemos un determinado cuadro en funcion de coordenadas
+	// que le pasemos, por ejemplo 0,0 es el cuadro asfalto
+	public Cuadro obtenerCuadro(final int x, final int y) {
+		// este switch no nesesita break porque el return cumple la misma
+		// funcion
+		if (x < 0 || y < 0 || x >= ancho || y >= ancho) {
+			return Cuadro.VACIO;
+		}
+		switch (cuadros[x + y * ancho]) {
+		case 0:
+			return Cuadro.ASFALTO;
+		case 2:
+			return Cuadro.VACIO;
+		case 3:
+			return Cuadro.VACIO;
+		case 4:
+			return Cuadro.VACIO;
+		default:
+			return Cuadro.VACIO;
+
+		}
+	}
+
+}
+
+
+package juego;
+
+import java.awt.BorderLayout;
+import java.awt.Canvas;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+
+import control.Teclado;
+import graficos.Pantalla;
+import mapa.Mapa;
+import mapa.mapaGenerado;
+
+public class Juego extends Canvas implements Runnable {
+
+	private static final long serialVersionUID = 1L;
+
+	private static final int ANCHO = 900;
+	private static final int ALTO = 650;
+	private static final String NOMBRE = "Juego";
+
+	private static int aps = 0;
+	private static int fps = 0;
+
+	private static int x = 0;
+	private static int y = 0;
+
+	private static volatile boolean Corriendo = false;
+
+	private static JFrame Ventana;
+	private static Thread thread;
+	private static Teclado teclado;
+	private static Pantalla pantalla;
+
+	private static Mapa mapa;
+
+	private static BufferedImage imagen = new BufferedImage(ANCHO, ALTO, BufferedImage.TYPE_INT_RGB);
+
+	private static int[] pixeles = ((DataBufferInt) imagen.getRaster().getDataBuffer()).getData();
+
+	private static final ImageIcon icono = new ImageIcon(Juego.class.getResource("/icono/icono.png"));
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR
+	// DE JUEGO
+	private Juego() {
+
+		setPreferredSize(new Dimension(ANCHO, ALTO));
+
+		pantalla = new Pantalla(ALTO, ANCHO);
+
+		mapa = new mapaGenerado(128, 128);
+
+		Ventana = new JFrame(NOMBRE);
+
+		teclado = new Teclado();
+		addKeyListener(teclado);
+
+		Ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		Ventana.setResizable(false);
+		Ventana.setIconImage(icono.getImage());
+		Ventana.setVisible(true);
+		Ventana.setLayout(new BorderLayout());
+		Ventana.add(this, BorderLayout.CENTER);
+		Ventana.pack();
+		Ventana.setLocationRelativeTo(null);
+
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// INICIAR
+	private synchronized void iniciar() {
+
+		Corriendo = true;
+		thread = new Thread(this, "Graficos");
+		thread.start();
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// DETENER
+	private synchronized void detener() {
+		Corriendo = false;
+
+		try {
+			thread.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// ACTUALIZAR
+	public void Actualizar() {
+
+		teclado.Actualizar();
+		if (teclado.arriba) {
+			y--;
+		}
+		if (teclado.abajo) {
+			y++;
+		}
+		if (teclado.izquierda) {
+			x--;
+		}
+		if (teclado.derecha) {
+			x++;
+		}
+
+		aps++;
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// MOSTRAR
+	public void Mostrar() {
+
+		BufferStrategy estrategia = getBufferStrategy();
+
+		if (estrategia == null) {
+			createBufferStrategy(3);
+			return;
+		}
+
+		pantalla.limpiar();
+		mapa.mostrar(x, y, pantalla);
+
+		System.arraycopy(pantalla.pixeles, 0, pixeles, 0, pixeles.length);
+
+		// metodo que podria ser lento en algunas PCs
+		// for(int i = 0; i < pixeles.length; i++){
+		// pixeles[i] = pantalla.pixeles[i];
+		// }
+
+		Graphics g = estrategia.getDrawGraphics();
+		g.drawImage(imagen, 0, 0, getWidth(), getHeight(), null);
+		// dibujar cuadradito en pantalla al centro
+		g.setColor(Color.RED);
+		g.fillRect(ANCHO / 2, ALTO / 2, 32, 32);
+		// .-----------------------
+		g.dispose();
+
+		estrategia.show();
+
+		fps++;
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// RUN
+	public void run() {
+
+		final int NS_POR_SEGUNDO = 1000000000;
+		final byte APS_OBJETIVO = 60;
+		final double NS_POR_ACTUALIZACION = NS_POR_SEGUNDO / APS_OBJETIVO;
+
+		long referenciaActualizacion = System.nanoTime();
+		long referenciaContador = System.nanoTime();
+
+		double tiempoTranscurrido;
+		double delta = 0;
+
+		requestFocus();
+
+		while (Corriendo) {
+			final long inicioBucle = System.nanoTime();
+
+			tiempoTranscurrido = inicioBucle - referenciaActualizacion;
+			referenciaActualizacion = inicioBucle;
+
+			delta += tiempoTranscurrido / NS_POR_ACTUALIZACION;
+
+			while (delta >= 1) {
+				Actualizar();
+				delta--;
+			}
+
+			Mostrar();
+
+			if (System.nanoTime() - referenciaContador > NS_POR_SEGUNDO) {
+				Ventana.setTitle(NOMBRE + "|| APS: " + aps + " || FPS: " + fps);
+				aps = 0;
+				fps = 0;
+				referenciaContador = System.nanoTime();
+			}
+		}
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// MAIN
+	public static void main(String[] args) {
+		Juego juego = new Juego();
+		juego.iniciar();
+	}
+
+}
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+|||||||||||||||||||||||||||||||||||||||||||||||||CLASE PANTALLLA||||||||||||||||||||||||||||||||||||||||||||||||
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+package graficos;
+
+import mapa.cuadro.Cuadro;
+
+public final class Pantalla {
+
+	private final int alto;
+	private final int ancho;
+
+	// estos int se van a encargar de controlar en que medida se mueve el
+	// personaje por
+	// el mapa para mostrar los sprites que correspondan
+	private int diferenciaX;
+	private int diferenciaY;
+
+	public void estableceDiferencia(final int diferenciaX, final int diferenciaY) {
+		this.diferenciaX = diferenciaX;
+		this.diferenciaY = diferenciaY;
+	}
+
+	public int obtenerAlto() {
+		return alto;
+	}
+
+	public int obtenerAncho() {
+		return ancho;
+	}
+
+	public final int[] pixeles;
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-CONSTRUCTOR
+	// DE PANTALLA
+	public Pantalla(final int alto, final int ancho) {
+		this.ancho = ancho;
+		this.alto = alto;
+
+		pixeles = new int[alto * ancho];
+	}
+
+	// -|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// LIMPIAR
+	public void limpiar() {
+		for (int i = 0; i < pixeles.length; i++) {
+			pixeles[i] = 0;
+		}
+	}
+
+	// |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-METODO
+	// MOSTRAR CUADRO
+	public void mostrarCuadro(int compensacionX, int compensacionY, Cuadro cuadro) {
+
+		// estas compensacines nos ayudan a saber en que medida se ha desplazado
+		// el mapa
+		// respecto a la pantalla, con nuestro peronaje.
+		compensacionX -= diferenciaX;
+		compensacionY -= diferenciaY;
+
+		// con el doble bucle nos aseguramos de que la pantalla se actualize en
+		// todas direcciones
+		for (int y = 0; y < cuadro.sprite.obtenerLado(); y++) {
+			int posY = y + compensacionY;
+
+			for (int x = 0; x < cuadro.sprite.obtenerLado(); x++) {
+				int posX = x + compensacionX;
+
+				// con este if logramos dibujar solo lo que este dentro de la
+				// ventana, y no todo el mapa
+				if (posX < -cuadro.sprite.obtenerLado() || posX >= ancho || posY < 0 || posY >= alto) {
+					// salir del bucle
+					break;
+				}
+				if (posX < 0) {
+					posX = 0;
+				}
+				pixeles[posX + posY * ancho] = cuadro.sprite.pixeles[x + y * cuadro.sprite.obtenerLado()];
+			}
+		}
+	}
+
+}

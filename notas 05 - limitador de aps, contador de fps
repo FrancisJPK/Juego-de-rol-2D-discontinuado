@@ -1,0 +1,116 @@
+
+package Juego;
+
+import java.awt.BorderLayout;
+import java.awt.Canvas;
+import java.awt.Dimension;
+
+import javax.swing.JFrame;
+
+public class Juego extends Canvas implements Runnable{
+
+	private static final long serialVersionUID = 1L;
+	
+	private static final int ANCHO = 700;
+	private static final int ALTO = 600;
+	private static final String NOMBRE = "Juego";
+	private static JFrame Ventana;
+	private static Thread thread;
+	private static int aps = 0;
+	private static int fps = 0;
+	
+	
+	
+	private static volatile boolean Corriendo = false;
+	
+	
+	private Juego(){
+
+		setPreferredSize(new Dimension(ANCHO,ALTO));
+		
+		Ventana = new JFrame(NOMBRE);
+		
+		Ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		Ventana.setResizable(false);
+		Ventana.setVisible(true);
+		Ventana.setLayout(new BorderLayout());
+		Ventana.add(this, BorderLayout.CENTER);
+		Ventana.pack();
+		Ventana.setLocationRelativeTo(null);
+		
+	}
+
+	private synchronized void iniciar(){
+		
+		Corriendo = true;
+		thread = new Thread(this, "Graficos");
+		thread.start();
+	}
+
+	private synchronized void detener(){
+		Corriendo = false;
+
+		try {
+			thread.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	//este metodo nos servira para actualizar las variables como la pos del jugador, la vida, etc
+	public void Actualizar(){
+		aps++;
+	}
+	//y este otro para graficar todo lo que deva aparecer en pantalla o lo que se renueve
+	public void Mostrar(){
+		fps++;
+	}
+	
+	public void run() {
+	//ahora que pasa, hay un problema, y es que esto se actualiza muy rapido, lo mas que puede por
+	//tanto, dependiendode la pc del que lo use, podria ir tan RAPIDO/LENTO, que seria injugable...
+	//asique devemos limitar estos metodos para que se actualizen a una determinada frecuancia!
+		
+		final int NS_POR_SEGUNDO = 1000000000;//son los ns dentro de un s
+		final byte APS_OBJETIVO = 60; //APS= acts. por segundo
+		final double NS_POR_ACTUALIZACION = NS_POR_SEGUNDO / APS_OBJETIVO;
+		//el fin de esta ultima es descubrir cuantos ns deve haber entre actualizacion
+		
+		long referenciaActualizacion = System.nanoTime();
+		long referenciaContador = System.nanoTime();
+		
+		double tiempoTranscurrido;
+		double delta = 0;//la cantidad de tiempo que a transcurrido hasta que se realiza una act.
+		
+		while(Corriendo){
+			final long inicioBucle = System.nanoTime();
+			
+			tiempoTranscurrido = inicioBucle - referenciaActualizacion;
+			referenciaActualizacion = inicioBucle;
+			
+			delta += tiempoTranscurrido / NS_POR_ACTUALIZACION;
+			
+			while(delta >= 1){
+				Actualizar();
+				delta--;
+			}
+			
+			Mostrar();
+			//si, ESTE TIEMPO(ACTUAL), menos referencia contador da MAYOR a NS_POR_ACT:
+			
+			if(System.nanoTime() - referenciaContador > NS_POR_SEGUNDO){
+				Ventana.setTitle(NOMBRE+"|| Actualizaciones por segundo: "+aps+" || Frames por segundo: "+fps);
+				aps = 0;
+				fps = 0;
+				referenciaContador = System.nanoTime();
+			}
+		}
+	}
+	
+	public static void main(String[] args){
+		Juego juego = new Juego();
+		juego.iniciar();
+	}
+	
+}
+
